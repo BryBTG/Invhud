@@ -144,37 +144,38 @@ ESX.RegisterServerCallback('invhud:doMath', function(source, cb, inv)
 end)
 
 ESX.RegisterServerCallback('invhud:getInv', function(source, cb, invType, id, class)
-	local xPlayer = ESX.GetPlayerFromId(source)
-	local weightLimit = 500
-	if class ~= nil then
-		if type(class) == 'number' then
-			if Config.Weight.VehicleLimits.Class[class] then
-				weightLimit = Config.Weight.VehicleLimits.Class[class][invType]
-			end
-		elseif type(class) == 'string' then
-			if Config.Weight.VehicleLimits.CustomModels[class] then
-				weightLimit = Config.Weight.VehicleLimits.CustomModels[class][invType]
-			end
-		end
-	end
-	MySQL.Async.fetchAll('SELECT * FROM inventories WHERE owner = @owner AND type = @type', {['@owner'] = id, ['@type'] = type}, function(result)
-		if result[1] then
-			cb(result[1])
-		else
-			MySQL.Async.execute('INSERT INTO `inventories` (owner, type, data, `limit`) VALUES (@id, @type, @data, @limit)', {
-				['@id'] = id,
-				['@type'] = invType,
-				['@data'] = json.encode({items = {}, weapons = {}, blackMoney = 0, cash = 0}),
-				['@limit'] = weightLimit
-			}, function(rowsChanged)
-				if rowsChanged then
-					print('Inventory created for: '..id..' with type: '..invType)
-				end
-			end)
-			cb({['owner'] = id, ['type'] = invType, ['data'] = json.encode({items = {}, weapons = {}, blackMoney = 0, cash = 0}), ['limit'] = weightLimit})
-		end
-	end)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    local weightLimit = 500
+    if class ~= nil then
+        if type(class) == 'number' then
+            if Config.Weight.VehicleLimits.Classes[class] then
+                weightLimit = Config.Weight.VehicleLimits.Classes[class][invType]
+            end
+        elseif type(class) == 'string' then
+            if Config.Weight.VehicleLimits.CustomModels[class] then
+                weightLimit = Config.Weight.VehicleLimits.CustomModels[class][invType]
+            end
+        end
+    end
+    MySQL.Async.fetchAll('SELECT * FROM inventories WHERE owner = @owner AND type = @type', {['@owner'] = id, ['@type'] = invType}, function(result)
+        if result[1] then
+            cb(result[1])
+        else
+            MySQL.Async.execute('INSERT INTO `inventories` (owner, type, data, `limit`) VALUES (@id, @type, @data, @limit)', {
+                ['@id'] = id,
+                ['@type'] = invType,
+                ['@data'] = json.encode({items = {}, weapons = {}, blackMoney = 0, cash = 0}),
+                ['@limit'] = weightLimit
+            }, function(rowsChanged)
+                if rowsChanged then
+                    print('Inventory created for: '..id..' with type: '..invType)
+                end
+            end)
+            cb({['owner'] = id, ['type'] = invType, ['data'] = json.encode({items = {}, weapons = {}, blackMoney = 0, cash = 0}), ['limit'] = weightLimit})
+        end
+    end)
 end)
+
 
 RegisterServerEvent('invhud:removeWeight')
 AddEventHandler('invhud:removeWeight', function(source, gun, ammo)
